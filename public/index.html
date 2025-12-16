@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Agent</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeIn Down 0.5s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.05em;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 3rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 1.25rem 1.5rem;
+            padding-right: 4rem;
+            font-size: 1.1rem;
+            background: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        button.send-btn {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--primary);
+            border: none;
+            border-radius: 0.75rem;
+            width: 3rem;
+            height: 3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        button.send-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .results.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .temp {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .chip {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Wanderlust AI</h1>
+            <p class="subtitle">Your intelligent travel companion</p>
+        </header>
+
+        <form id="searchForm" class="search-box">
+            <input type="text" id="query" placeholder="Where do you want to go? (e.g., 'Plan a trip to Tokyo')" autocomplete="off">
+            <button type="submit" class="send-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </form>
+
+        <div id="loading" class="loading">
+            Planning your perfect trip...
+        </div>
+
+        <div id="results" class="results">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('searchForm');
+        const input = document.getElementById('query');
+        const resultsDiv = document.getElementById('results');
+        const loadingDiv = document.getElementById('loading');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const query = input.value.trim();
+            if (!query) return;
+
+            // UI Reset
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.remove('visible');
+            loadingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: query })
+                });
+
+                const data = await response.json();
+                loadingDiv.style.display = 'none';
+
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    renderResults(data);
+                }
+
+            } catch (err) {
+                loadingDiv.style.display = 'none';
+                showError("Something went wrong. Please try again.");
+                console.error(err);
+            }
+        });
+
+        function showError(msg) {
+            resultsDiv.innerHTML = `<div class="error-msg">${msg}</div>`;
+            resultsDiv.classList.add('visible');
+        }
+
+        function renderResults(data) {
+            let html = '';
+
+            // 1. Weather
+            if (data.weather) {
+                html += `
+                    <div class="card" style="--accent: #f59e0b">
+                        <h2>🌤️ Weather in ${data.city}</h2>
+                        <div class="weather-info">
+                            <span class="temp">${data.weather.temperature}°C</span>
+                            <span>${data.weather.description}</span>
+                            <span class="chip">Rain: ${data.weather.rain_chance}%</span>
+                        </div>
+                        ${data.activity_advice ? `<p style="margin-top:1rem; color: #94a3b8;">${data.activity_advice}</p>` : ''}
+                    </div>
+                `;
+            }
+
+            // 2. Places
+            if (data.places && data.places.length > 0) {
+                const placesList = data.places.map(p => `<li>${p}</li>`).join('');
+                html += `
+                    <div class="card" style="--accent: #ec4899">
+                        <h2>📍 Top Attractions</h2>
+                        <ul>${placesList}</ul>
+                    </div>
+                `;
+            }
+
+            // 3. Packing
+            if (data.packing && data.packing.length > 0) {
+                 const packingList = data.packing.map(item => `<li>${item}</li>`).join('');
+                 html += `
+                    <div class="card" style="--accent: #10b981">
+                        <h2>🎒 Packing List</h2>
+                        <ul>${packingList}</ul>
+                    </div>
+                `;
+            }
+
+            // 4. Tips
+            if (data.tips && data.tips.length > 0) {
+                 const tipsList = data.tips.map(tip => `<li>${tip}</li>`).join('');
+                 html += `
+                    <div class="card" style="--accent: #8b5cf6">
+                        <h2>💡 Local Tips</h2>
+                        <ul>${tipsList}</ul>
+                    </div>
+                `;
+            }
+
+            resultsDiv.innerHTML = html;
+            // Trigger reflow for animation
+            void resultsDiv.offsetWidth;
+            resultsDiv.classList.add('visible');
+        }
+    </script>
+</body>
+</html>
